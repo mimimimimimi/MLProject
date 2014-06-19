@@ -1,0 +1,68 @@
+Project
+========================================================
+
+
+```{r  echo=FALSE, results='hide',message=FALSE}
+library(caret)
+```
+**Reading and Processing the Data**
+
+First: Reading the csv file, and look at the name of its variable
+and Remove variables that are nulls
+
+```{r  echo=FALSE, results='hide'}
+
+```{r}
+nullstrings=c("","NA")
+data = read.csv("pml-training.csv", na.strings=nullstrings)
+whichcolsarenull<-apply(data, 2, function(curcol){sum(is.na(curcol))})
+Finaldata<-data[,which(whichcolsarenull==0)]
+dim(Finaldata)
+```
+Column with mostly Nulls are removed
+```{r echo=FALSE, results='hide',message=FALSE}
+na.strings=c("NA","")
+NULLS<-apply(data,2,function(x) {sum(is.na(x))})
+Finaldata<-data[,which(NULLS==0)]
+dim(Finaldata)
+```
+Also, The first 7 variables need to be removed since they are not related to the result. 
+```{r}
+Finaldata = Finaldata[,-c(1:7)]
+dim(Finaldata)
+```
+**Data Partition**
+
+Partitioning data into Training, and Testing set
+
+```{r}
+inTrain=createDataPartition(Finaldata$classe,p=0.7,list=FALSE)
+training=Finaldata[-inTrain,]
+testing=Finaldata[inTrain,]
+dim(training);dim(testing)
+```
+**Building the Model**
+
+*using random forest to build the model*
+
+```{r cache=TRUE}
+modelFit <- train(training$classe ~ ., data=training, method='rf',  trControl = trainControl(method = "cv", number = 4), allowParallel=T)
+```
+
+**Checking the accuracy of the model (in-sample error)**
+The model is expected to be accurate , and using the model Fit, the accuracy was 1
+```{r}
+modelFit
+```
+
+**Using the model on testing data to predict its classe**
+```{r}
+pre<-predict(modelFit,testing)
+```
+**Testing the Model on CrossValidation Test by:**
+
+    *Estimating the out-of-sample error using Confusion matrix*
+
+```{r}
+confusionMatrix(testing$classe,pre)
+```
